@@ -1,0 +1,38 @@
+[
+  {
+    "id": "1",
+    "codeId": "SAR",
+    "curr_name": "ريال سعودي",
+    "sale_san": 140.2,
+    "sale_adn": 630,
+    "purch_san": 139.8,
+    "purch_adn": 620
+  },
+  {
+    "id": "2",
+    "codeId": "USD",
+    "curr_name": "دولار أمريكي",
+    "sale_san": 537,
+    "sale_adn": 2385,
+    "purch_san": 535,
+    "purch_adn": 2375
+  },
+  {
+    "id": "5",
+    "codeId": "GLD",
+    "curr_name": "ذهب عيار 21",
+    "sale_san": 44500,
+    "sale_adn": 180000,
+    "purch_san": 42000,
+    "purch_adn": 17000
+  },
+  {
+    "id": "6",
+    "codeId": "JOD",
+    "curr_name": "دينار أردني",
+    "sale_san": 772,
+    "sale_adn": 1766,
+    "purch_san": 767.31,
+    "purch_adn": 1756.07
+  }
+]
