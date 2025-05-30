@@ -1,0 +1,23 @@
+{
+  "name": "my-api-server",
+  "version": "1.0.0",
+  "description": "A simple RESTful API for managing currency rates using Node.js and Express.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": [
+    "nodejs",
+    "express",
+    "api",
+    "currency",
+    "rest"
+  ],
+  "author": "AzAlhakimi",
+  "license": "MIT",
+  "dependencies": {
+    "body-parser": "^2.2.0",
+    "cors": "^2.8.5",
+    "express": "^5.1.0"
+  }
+}
