@@ -1,37 +1,25 @@
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
-const fs = require('fs');
+const mongoose = require('mongoose');
+const Currency = require('./models/Currency');
 const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const RATES_FILE = path.join(__dirname, 'update_rate');
+
+mongoose.connect('mongodb+srv://azhakimi:azmihakimi@cluster0.ehnpeeg.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0', {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+}).then(() => {
+  console.log('✅ Connected to MongoDB');
+}).catch((err) => {
+  console.error('❌ MongoDB connection error:', err);
+});
 
 // Middlewares
 app.use(cors());
 app.use(bodyParser.json());
-
-// قراءة البيانات مع معالجة الأخطاء
-function readRates() {
-    try {
-        const data = fs.readFileSync(RATES_FILE, 'utf-8');
-        return JSON.parse(data);
-    } catch (err) {
-        console.error('Error reading rates file:', err);
-        return { posts: [] }; // إرجاع مصفوفة فارغة إذا كان الملف غير موجود
-    }
-}
-
-// كتابة البيانات مع معالجة الأخطاء
-function writeRates(content) {
-    try {
-        fs.writeFileSync(RATES_FILE, JSON.stringify(content, null, 2), 'utf-8');
-    } catch (err) {
-        console.error('Error writing to rates file:', err);
-        throw err;
-    }
-}
 
 // التحقق من صحة بيانات العملة
 function validateCurrency(currency) {
@@ -45,23 +33,20 @@ app.get('/', (req, res) => {
 });
 
 // جلب جميع العملات
-app.get('/rates', (req, res) => {
+app.get('/rates', async (req, res) => {
     try {
-        const data = readRates();
-        res.json(data.posts);
+  const rates = await Currency.find();
+  res.json(rates);
     } catch (err) {
         res.status(500).json({ message: 'Server error' });
     }
 });
 
 // جلب عملة محددة بواسطة id
-app.get('/rates/:id', (req, res) => {
+app.get('/rates/:id', async (req, res) => {
     try {
-        const data = readRates();
-        const currency = data.posts.find(item => item.id === req.params.id);
-        if (!currency) {
-            return res.status(404).json({ message: 'Currency not found' });
-        }
+        const currency = await Currency.findOne({ id: req.params.id });
+        if (!currency) return res.status(404).json({ message: 'Currency not found' });
         res.json(currency);
     } catch (err) {
         res.status(500).json({ message: 'Server error' });
@@ -69,65 +54,40 @@ app.get('/rates/:id', (req, res) => {
 });
 
 // إضافة عملة جديدة
-app.post('/rates', (req, res) => {
-    try {
-        const data = readRates();
-        const newCurrency = req.body;
-        
-        validateCurrency(newCurrency);
-        
-        // التحقق من عدم وجود id مكرر
-        if (data.posts.some(item => item.id === newCurrency.id)) {
-            return res.status(400).json({ message: 'Currency ID already exists' });
-        }
-        
-        data.posts.push(newCurrency);
-        writeRates(data);
-        res.status(201).json(newCurrency);
-    } catch (err) {
-        res.status(400).json({ message: err.message });
-    }
+app.post('/rates', async (req, res) => {
+  try {
+    validateCurrency(req.body); // تحقق من البيانات قبل الحفظ
+    const currency = new Currency(req.body);
+    await currency.save();
+    res.status(201).json(currency);
+
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
 });
 
 // تحديث عملة
-app.put('/rates/:id', (req, res) => {
-    try {
-        const data = readRates();
-        const id = req.params.id;
-        const index = data.posts.findIndex(item => item.id === id);
-        
-        if (index === -1) {
-            return res.status(404).json({ message: 'Currency not found' });
-        }
-        
-        const updatedCurrency = { ...data.posts[index], ...req.body };
-        validateCurrency(updatedCurrency);
-        
-        data.posts[index] = updatedCurrency;
-        writeRates(data);
-        res.json(updatedCurrency);
-    } catch (err) {
-        res.status(400).json({ message: err.message });
-    }
+app.put('/rates/:id', async (req, res) => {
+  try {
+    validateCurrency(req.body);
+    const updated = await Currency.findOneAndUpdate(
+      { id: req.params.id },
+      req.body,
+      { new: true }
+    );
+    if (!updated) return res.status(404).json({ message: 'Currency not found' });
+    res.json(updated);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+
 });
 
 // حذف عملة
-app.delete('/rates/:id', (req, res) => {
-    try {
-        const data = readRates();
-        const id = req.params.id;
-        const index = data.posts.findIndex(item => item.id === id);
-        
-        if (index === -1) {
-            return res.status(404).json({ message: 'Currency not found' });
-        }
-        
-        const deleted = data.posts.splice(index, 1);
-        writeRates(data);
-        res.json(deleted[0]);
-    } catch (err) {
-        res.status(500).json({ message: 'Server error' });
-    }
+app.delete('/rates/:id', async (req, res) => {
+  const deleted = await Currency.findOneAndDelete({ id: req.params.id });
+  if (!deleted) return res.status(404).json({ message: 'Currency not found' });
+  res.json(deleted);
 });
 
 // تشغيل الخادم
