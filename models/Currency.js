@@ -9,5 +9,12 @@ const currencySchema = new mongoose.Schema({
   purch_san: Number,
   purch_adn: Number,
 });
+currencySchema.set('toJSON', {
+  transform: (doc, ret) => {
+    delete ret.__v;
+    delete ret._id;
+    return ret;
+  }
+});
 
 module.exports = mongoose.model('Currency', currencySchema);
